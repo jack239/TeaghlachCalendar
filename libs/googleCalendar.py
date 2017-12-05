@@ -5,20 +5,13 @@ import urllib2
 from datetime import datetime, timedelta
 from dateutil.rrule import rruleset, rrulestr
 from django.utils import timezone
+from botUtils import createMarkup
+
 cal = None
 
 #import locale
 #locale.setlocale(locale.LC_ALL, 'ru_RU.UTF-8')
 
-#WeekDays = {
-#    1: u'Понедельник',
-#    2: u'Вторник',
-#    3: u'Среда',
-#    4: u'Четверг',
-#    5: u'Пятница',
-#    6: u'Суббота',
-#    7: u'Воскресенье',
-#}
 
 def parse_recurrences(component, start, end):#recur_rule, start, exclusions):
     recur_rule = component.get('rrule').to_ical().decode('utf-8')
@@ -113,3 +106,35 @@ def create_calendar(year,month):
     keys.append([('На эту неделю', u'getSheduleWeekly'),
                  ('На следующую неделю', u'getSheduleNextWeekly')])
     return keys
+
+
+def processSheduleImpl(data):
+    if data[0] == 'getSheduleToday':
+        return getWeeklyShedule()
+    elif data[0] == 'getSheduleTommoroe':
+        return getWeeklyShedule(offset = 1)
+    elif data[0] == 'getSheduleWeekly':
+        return getWeeklyShedule(week = True)
+    elif data[0] == 'getSheduleNextWeekly':
+        return getWeeklyShedule(week = True, offset = 7)
+    elif data[0] == 'getSheduleDay':
+        return getWeeklyShedule(day = map(int, data[1:]))
+def processCalendar(bot, chat_id, data):
+    shed = processSheduleImpl(data)
+    if shed:
+        bot.sendMessage(chat_id, u'\n'.join(shed))
+        return
+    if data[0] == 'calendar' and len(data) > 1:
+        try:
+            date = int(data[1])
+            markup = createCalendar(date)
+            bot.sendMessage(chat_id, 'Выбирите день', reply_markup=markup)
+        except:
+            pass
+
+
+def createCalendar(date = None):
+    if date is None:
+        now = datetime.now()
+        return createMarkup(create_calendar(now.year,now.month))
+    return createMarkup(create_calendar(date / 12, date % 12 + 1))

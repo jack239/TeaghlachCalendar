@@ -1,0 +1,7 @@
+
+*.pyc
+Token.txt
+feisToken.txt
+.ipynb_checkpoints/TelegramBot-checkpoint.ipynb
+Logs/*
+feisBot_files/*
